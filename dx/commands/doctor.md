@@ -69,7 +69,7 @@ codeagent-wrapper  | 未安装   | -
 
    执行安装命令：
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/rangershi/mydx/master/install.sh | bash
+   curl -fsSL https://raw.githubusercontent.com/cexll/myclaude/master/install.sh | bash
    ```
 
    - 如果安装成功，输出成功消息并重新检测版本
@@ -81,10 +81,10 @@ codeagent-wrapper  | 未安装   | -
    ```
    请手动执行以下命令安装 codeagent-wrapper：
 
-   curl -fsSL https://raw.githubusercontent.com/rangershi/mydx/master/install.sh | bash
+   curl -fsSL https://raw.githubusercontent.com/cexll/myclaude/master/install.sh | bash
 
    或者访问以下链接获取更多安装选项：
-   https://github.com/rangershi/mydx/blob/master/install.sh
+   https://github.com/cexll/myclaude/blob/master/install.sh
    ```
 
 ### 阶段 4：安装失败处理
@@ -97,7 +97,7 @@ codeagent-wrapper  | 未安装   | -
 自动安装过程中遇到错误。请尝试手动安装：
 
 1. 下载安装脚本：
-   curl -fsSL https://raw.githubusercontent.com/rangershi/mydx/master/install.sh -o install.sh
+   curl -fsSL https://raw.githubusercontent.com/cexll/myclaude/master/install.sh -o install.sh
 
 2. 查看脚本内容（可选）：
    cat install.sh
@@ -106,7 +106,7 @@ codeagent-wrapper  | 未安装   | -
    bash install.sh
 
 如果问题持续，请访问：
-https://github.com/rangershi/mydx/issues
+https://github.com/cexll/myclaude/issues
 ```
 
 ## 输出格式
