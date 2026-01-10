@@ -1,5 +1,36 @@
 ## Usage
-`/project:bugfix <ERROR_DESCRIPTION>`
+`/dx:bugfix <ERROR_DESCRIPTION> [OPTIONS]`
+
+### Options
+- `--codex`: Agents use codeagent-wrapper (Codex backend) for execution
+- `--gemini`: Agents use codeagent-wrapper (Gemini backend) for execution
+
+---
+
+## 执行模式
+
+用户通过参数指定执行模式，Orchestrator 将模式传递给各个 Agent：
+
+| 参数 | Agent 执行方式 | 适用场景 |
+|------|----------------|----------|
+| （默认） | Agent 直接执行 | 大多数 Bug 修复任务 |
+| `--codex` | Agent 委托 codeagent-wrapper (Codex) | 复杂调试、需要 Context Isolation |
+| `--gemini` | Agent 委托 codeagent-wrapper (Gemini) | UI/UX 相关问题 |
+
+### 模式传递机制
+
+1. Orchestrator 解析参数，确定 `EXECUTION_MODE`:
+   - 默认: `direct`
+   - `--codex`: `codex`
+   - `--gemini`: `gemini`
+
+2. 调用 Task tool 时，在 prompt 中包含 `EXECUTION_MODE: {mode}`
+
+3. Agent 根据 `EXECUTION_MODE` 决定执行方式：
+   - `direct`: 使用 Edit/Write/Read 等工具直接执行
+   - `codex`/`gemini`: 委托给 `codeagent-wrapper --backend {mode}`
+
+---
 
 ## Context
 - Error description: $ARGUMENTS
@@ -13,11 +44,31 @@ You adhere to core software engineering principles like KISS (Keep It Simple, St
 
 ## Sub-Agent Chain Process
 
-Execute the following chain using Claude Code's sub-agent syntax:
+Execute the following chain using Claude Code's sub-agent syntax, passing `EXECUTION_MODE: {mode}` to each agent:
 
 ```
-First use the bugfix sub agent to analyze and implement fix for [$ARGUMENTS], then use the bugfix-verify sub agent to validate fix quality with scoring, then if score ≥90% complete workflow with final report, otherwise use the bugfix sub agent again with validation feedback and repeat validation cycle.
+Use Task tool with bugfix agent:
+
+EXECUTION_MODE: {mode}  # direct / codex / gemini
+Error Description: [$ARGUMENTS]
+
+Task: Analyze and implement fix for the reported error.
 ```
+
+Then validate:
+
+```
+Use Task tool with bugfix-verify agent:
+
+EXECUTION_MODE: {mode}  # direct / codex / gemini
+Error Description: [$ARGUMENTS]
+
+Task: Validate fix quality with scoring.
+```
+
+Then evaluate quality gate:
+- If score ≥90%: Complete workflow with final report
+- If score <90%: Use bugfix agent again with validation feedback and repeat validation cycle
 
 ## Workflow Logic
 

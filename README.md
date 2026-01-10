@@ -124,6 +124,104 @@ git clone https://github.com/rangershi/mydx.git .claude-plugin/mydx
 | `/feature-dev:feature-dev` | 功能开发流程 |
 | `/requirements-driven-workflow:requirements-pilot` | 需求驱动开发流程 |
 
+## 工作流详解
+
+### BMAD 工作流 (`bmad/`)
+
+**BMAD (Business Model Agile Development)** 是一套完整的敏捷开发流程，模拟真实团队协作。
+
+| Agent | 角色 | 职责 |
+|-------|------|------|
+| `bmad-po` | Product Owner | 需求分析、用户故事编写 |
+| `bmad-architect` | 架构师 | 技术方案设计、架构决策 |
+| `bmad-sm` | Scrum Master | 流程协调、任务分配 |
+| `bmad-dev` | 开发者 | 代码实现 |
+| `bmad-qa` | QA 工程师 | 测试用例设计、质量保证 |
+| `bmad-review` | 代码审查 | Code Review |
+| `bmad-orchestrator` | 编排器 | 协调各角色工作流 |
+
+**入口命令**: `/bmad:bmad-pilot`
+
+### Requirements-Driven 工作流 (`requirements-driven-workflow/`)
+
+**需求驱动开发流程**，强调从需求确认到代码实现的完整链路。
+
+| Agent | 职责 |
+|-------|------|
+| `requirements-generate` | 生成技术规格文档 |
+| `requirements-code` | 基于规格实现代码 |
+| `requirements-review` | 代码质量评审 |
+| `requirements-testing` | 测试用例生成与执行 |
+
+**流程**:
+1. **Phase 0**: 仓库扫描（了解现有代码库）
+2. **Phase 1**: 需求确认（交互式澄清，90+ 质量分）
+3. **用户审批门控**（必须获得用户确认才进入实现）
+4. **Phase 2**: 实现（规格生成 → 代码实现 → 评审 → 测试）
+
+**入口命令**: `/requirements-driven-workflow:requirements-pilot`
+
+### Feature-Dev 工作流 (`feature-dev/`)
+
+**功能开发工作流**，专注于单个功能的完整开发周期。
+
+| Agent | 职责 |
+|-------|------|
+| `code-explorer` | 代码库探索、模式识别 |
+| `code-architect` | 功能架构设计 |
+| `code-reviewer` | 代码审查与质量评估 |
+
+**入口命令**: `/feature-dev:feature-dev`
+
+## Skills 说明
+
+Skills 提供专业领域知识和外部工具集成能力。
+
+### codeagent (`skills/codeagent/`)
+
+统一的多后端代码代理封装，通过 `codeagent-wrapper` 调用不同的 AI 后端。
+
+**核心命令**:
+```bash
+codeagent-wrapper --backend {codex|gemini|claude} "task description"
+```
+
+**关键规则**:
+- 长时间运行是正常的（2-10 分钟）
+- **永远不要 kill codeagent 进程**
+- 使用 `timeout: 7200000` 配置
+
+### codex (`skills/codex/`)
+
+OpenAI Codex CLI 集成，适用于复杂推理和深度代码分析任务。
+
+**使用方式**:
+```bash
+codeagent-wrapper --backend codex "implement feature X"
+```
+
+**适用场景**: 复杂算法实现、深度调试、需要强推理的任务
+
+### gemini (`skills/gemini/`)
+
+Google Gemini CLI 集成，适用于 UI/UX 相关开发任务。
+
+**使用方式**:
+```bash
+codeagent-wrapper --backend gemini "design UI component"
+```
+
+**适用场景**: UI 组件开发、前端样式优化、用户体验相关任务
+
+### product-requirements (`skills/product-requirements/`)
+
+产品需求文档处理技能，帮助解析和结构化产品需求。
+
+**功能**:
+- PRD 解析与结构化
+- 需求拆分为用户故事
+- 验收标准生成
+
 ## 目录结构
 
 ```
@@ -134,10 +232,20 @@ mydx/
 │   ├── commands/           # 命令定义
 │   ├── agents/             # Agent 定义
 │   ├── skills/             # Skills 定义
+│   │   ├── codeagent/      # 多后端代码代理
+│   │   ├── codex/          # OpenAI Codex 集成
+│   │   ├── gemini/         # Google Gemini 集成
+│   │   └── product-requirements/  # 产品需求处理
 │   ├── hooks/              # Hooks 配置（标准 Claude Code 格式）
-│   ├── bmad/               # BMAD 工作流
+│   ├── bmad/               # BMAD 敏捷工作流
+│   │   ├── commands/       # BMAD 入口命令
+│   │   └── agents/         # BMAD 角色代理
 │   ├── feature-dev/        # 功能开发工作流
+│   │   ├── commands/       # 入口命令
+│   │   └── agents/         # 开发代理
 │   └── requirements-driven-workflow/  # 需求驱动工作流
+│       ├── commands/       # 入口命令
+│       └── agents/         # 需求代理
 └── README.md
 ```
 

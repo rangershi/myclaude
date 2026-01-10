@@ -112,7 +112,7 @@ Begin the requirements confirmation process for: [$ARGUMENTS]
 **IMPORTANT**: After achieving 90+ quality score, you MUST STOP and wait for explicit user approval before proceeding to Phase 2.
 
 ### Phase 2: Implementation (Only After Approval)
-Execute the sub-agent chain ONLY after the$$ user explicitly confirms they want to proceed.
+Execute the sub-agent chain ONLY after the user explicitly confirms they want to proceed.
 
 ## Phase 1: Requirements Confirmation Process
 
