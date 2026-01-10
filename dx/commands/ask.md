@@ -1,5 +1,34 @@
 ## Usage
-`project:/ask <TECHNICAL_QUESTION>`
+`/dx:ask <TECHNICAL_QUESTION> [OPTIONS]`
+
+### Options
+- `--codex`: Use codeagent-wrapper (Codex backend) for execution
+- `--gemini`: Use codeagent-wrapper (Gemini backend) for execution
+
+---
+
+## 执行模式
+
+用户通过参数指定执行模式：
+
+| 参数 | 执行方式 | 适用场景 |
+|------|----------|----------|
+| （默认） | Claude 直接执行 | 大多数架构咨询任务 |
+| `--codex` | 委托 codeagent-wrapper (Codex) | 复杂任务、需要 Context Isolation |
+| `--gemini` | 委托 codeagent-wrapper (Gemini) | UI/UX 专项咨询 |
+
+### 模式传递机制
+
+1. 解析参数，确定 `EXECUTION_MODE`:
+   - 默认: `direct`
+   - `--codex`: `codex`
+   - `--gemini`: `gemini`
+
+2. 根据 `EXECUTION_MODE` 决定执行方式：
+   - `direct`: 直接分析并提供建议
+   - `codex`/`gemini`: 委托给 `codeagent-wrapper --backend {mode}`
+
+---
 
 ## Context
 - Technical question or architecture challenge: $ARGUMENTS
