@@ -186,32 +186,18 @@ Skills 提供专业领域知识和外部工具集成能力。
 codeagent-wrapper --backend {codex|gemini|claude} "task description"
 ```
 
+**支持的后端**:
+
+| 后端 | 适用场景 |
+|------|----------|
+| `codex` | 复杂算法实现、深度调试、需要强推理的任务 |
+| `gemini` | UI 组件开发、前端样式优化、用户体验相关任务 |
+| `claude` | 简单任务、文档生成、提示词工程 |
+
 **关键规则**:
 - 长时间运行是正常的（2-10 分钟）
 - **永远不要 kill codeagent 进程**
 - 使用 `timeout: 7200000` 配置
-
-### codex (`skills/codex/`)
-
-OpenAI Codex CLI 集成，适用于复杂推理和深度代码分析任务。
-
-**使用方式**:
-```bash
-codeagent-wrapper --backend codex "implement feature X"
-```
-
-**适用场景**: 复杂算法实现、深度调试、需要强推理的任务
-
-### gemini (`skills/gemini/`)
-
-Google Gemini CLI 集成，适用于 UI/UX 相关开发任务。
-
-**使用方式**:
-```bash
-codeagent-wrapper --backend gemini "design UI component"
-```
-
-**适用场景**: UI 组件开发、前端样式优化、用户体验相关任务
 
 ### product-requirements (`skills/product-requirements/`)
 
@@ -232,9 +218,7 @@ mydx/
 │   ├── commands/           # 命令定义
 │   ├── agents/             # Agent 定义
 │   ├── skills/             # Skills 定义
-│   │   ├── codeagent/      # 多后端代码代理
-│   │   ├── codex/          # OpenAI Codex 集成
-│   │   ├── gemini/         # Google Gemini 集成
+│   │   ├── codeagent/      # 多后端代码代理 (codex/gemini/claude)
 │   │   └── product-requirements/  # 产品需求处理
 │   ├── hooks/              # Hooks 配置（标准 Claude Code 格式）
 │   ├── bmad/               # BMAD 敏捷工作流
