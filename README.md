@@ -23,12 +23,32 @@
 
 ### 2. 安装插件
 
+#### 方式一：通过插件市场安装（推荐）
+
+```bash
+# 在 Claude Code 中运行
+/install-plugin https://github.com/rangershi/mydx
+```
+
+安装完成后，插件会自动加载，无需额外配置。
+
+#### 方式二：手动安装
+
 ```bash
 # 克隆仓库
 git clone https://github.com/rangershi/mydx.git
 
 # 在 Claude Code 中加载插件
 claude --plugin-dir /path/to/mydx
+```
+
+#### 方式三：项目级安装
+
+将插件克隆到项目的 `.claude-plugin/` 目录下，Claude Code 会自动识别并加载：
+
+```bash
+cd your-project
+git clone https://github.com/rangershi/mydx.git .claude-plugin/mydx
 ```
 
 ## 执行模式
