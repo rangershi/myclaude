@@ -1,60 +1,70 @@
 ---
 name: gemini
-description: Execute Gemini CLI for AI-powered code analysis and generation. Use when you need to leverage Google's Gemini models for complex reasoning tasks.
+description: Execute Gemini backend via codeagent-wrapper for AI-powered code analysis and generation. Use when you need to leverage Google's Gemini models for UI/UX tasks and visual design.
 ---
 
-# Gemini CLI Integration
+# Gemini Backend Integration
+
+> **Note**: This skill is accessed through `codeagent-wrapper --backend gemini`. For complete documentation including parallel execution and all features, see the [codeagent skill](../codeagent/SKILL.md).
 
 ## Overview
 
-Execute Gemini CLI commands with support for multiple models and flexible prompt input. Integrates Google's Gemini AI models into Claude Code workflows.
+Execute Gemini backend commands via codeagent-wrapper. Integrates Google's Gemini AI models into Claude Code workflows for UI/UX focused development.
 
 ## When to Use
 
-- Complex reasoning tasks requiring advanced AI capabilities
-- Code generation and analysis with Gemini models
-- Tasks requiring Google's latest AI technology
-- Alternative perspective on code problems
+- UI component scaffolding and layout prototyping
+- Design system implementation with style consistency
+- Interactive element generation with accessibility support
+- Visual design tasks and frontend development
 
 ## Usage
-**Mandatory**: Run via uv with fixed timeout 7200000ms (foreground):
+
+**Mandatory**: Run via codeagent-wrapper with fixed timeout 7200000ms (foreground):
+
 ```bash
-uv run ~/.claude/skills/gemini/scripts/gemini.py "<prompt>" [working_dir]
+codeagent-wrapper --backend gemini - [working_dir] <<'EOF'
+<task content here>
+EOF
 ```
 
-**Optional** (direct execution or using Python):
+**Simple tasks**:
 ```bash
-~/.claude/skills/gemini/scripts/gemini.py "<prompt>" [working_dir]
-# or
-python3 ~/.claude/skills/gemini/scripts/gemini.py "<prompt>" [working_dir]
+codeagent-wrapper --backend gemini "simple task here" [working_dir]
+```
+
+**Resume a session**:
+```bash
+codeagent-wrapper --backend gemini resume <session_id> - <<'EOF'
+<follow-up task>
+EOF
 ```
 
 ## Environment Variables
 
-- **GEMINI_MODEL**: Configure model (default: `gemini-3-pro-preview`)
-  - Example: `export GEMINI_MODEL=gemini-3`
+- **CODEX_TIMEOUT**: Override timeout in milliseconds (default: 7200000 = 2 hours)
 
 ## Timeout Control
 
-- **Fixed**: 7200000 milliseconds (2 hours), immutable
+- **Fixed**: 7200000 milliseconds (2 hours)
 - **Bash tool**: Always set `timeout: 7200000` for double protection
 
 ### Parameters
 
-- `prompt` (required): Task prompt or question
+- `task` (required): Task prompt or question
 - `working_dir` (optional): Working directory (default: current directory)
 
 ### Return Format
 
-Plain text output from Gemini:
+```
+Agent response text here...
 
-```text
-Model response text here...
+---
+SESSION_ID: 019a7247-ac9d-71f3-89e2-a823dbd8fd14
 ```
 
 Error format (stderr):
-
-```text
+```
 ERROR: Error message
 ```
 
@@ -62,59 +72,91 @@ ERROR: Error message
 
 When calling via Bash tool, always include the timeout parameter:
 
-```yaml
+```
 Bash tool parameters:
-- command: uv run ~/.claude/skills/gemini/scripts/gemini.py "<prompt>"
+- command: codeagent-wrapper --backend gemini - [working_dir] <<'EOF'
+  <task content>
+  EOF
 - timeout: 7200000
 - description: <brief description of the task>
 ```
 
-Alternatives:
-
-```yaml
-# Direct execution (simplest)
-- command: ~/.claude/skills/gemini/scripts/gemini.py "<prompt>"
-
-# Using python3
-- command: python3 ~/.claude/skills/gemini/scripts/gemini.py "<prompt>"
-```
-
 ### Examples
 
-**Basic query:**
-
+**Basic UI task:**
 ```bash
-uv run ~/.claude/skills/gemini/scripts/gemini.py "explain quantum computing"
+codeagent-wrapper --backend gemini - <<'EOF'
+Create a responsive navigation component with mobile hamburger menu
+EOF
 # timeout: 7200000
 ```
 
-**Code analysis:**
-
+**Design system implementation:**
 ```bash
-uv run ~/.claude/skills/gemini/scripts/gemini.py "review this code for security issues: $(cat app.py)"
+codeagent-wrapper --backend gemini - <<'EOF'
+Implement a button component following Material Design 3 guidelines:
+- Primary, secondary, and tertiary variants
+- Loading and disabled states
+- Proper accessibility attributes
+EOF
 # timeout: 7200000
 ```
 
 **With specific working directory:**
-
 ```bash
-uv run ~/.claude/skills/gemini/scripts/gemini.py "analyze project structure" "/path/to/project"
+codeagent-wrapper --backend gemini - "/path/to/project" <<'EOF'
+analyze @src/components and suggest UI improvements
+EOF
 # timeout: 7200000
 ```
 
-**Using python3 directly (alternative):**
+**Dashboard layout:**
+```bash
+codeagent-wrapper --backend gemini - <<'EOF'
+Create a responsive dashboard layout with:
+- Sidebar navigation with collapsible sections
+- Header with search and user profile
+- Main content area with data visualization cards
+- Mobile-first responsive design
+EOF
+# timeout: 7200000
+```
+
+## Parallel Execution
+
+For parallel execution with multiple tasks, use `codeagent-wrapper --parallel` with per-task backend specification:
 
 ```bash
-python3 ~/.claude/skills/gemini/scripts/gemini.py "your prompt here"
+codeagent-wrapper --parallel <<'EOF'
+---TASK---
+id: ui_components_1732876800
+backend: gemini
+workdir: /home/user/project
+---CONTENT---
+Create reusable button and input components
+---TASK---
+id: ui_layout_1732876801
+backend: gemini
+workdir: /home/user/project
+dependencies: ui_components_1732876800
+---CONTENT---
+Build dashboard layout using the new components
+EOF
 ```
+
+See [codeagent skill](../codeagent/SKILL.md) for complete parallel execution documentation.
+
+## Critical Rules
+
+**NEVER kill codeagent processes.** Long-running tasks (2-10 minutes) are normal. Instead:
+
+1. Check task status via log file: `tail -f /tmp/claude/<workdir>/tasks/<task_id>.output`
+2. Wait with timeout: `TaskOutput(task_id="<id>", block=true, timeout=300000)`
 
 ## Notes
 
-- **Recommended**: Use `uv run` for automatic Python environment management (requires uv installed)
-- **Alternative**: Direct execution `./gemini.py` (uses system Python via shebang)
-- Python implementation using standard library (zero dependencies)
+- **Unified entry point**: Use `codeagent-wrapper --backend gemini` for all Gemini tasks
 - Cross-platform compatible (Windows/macOS/Linux)
-- PEP 723 compliant (inline script metadata)
 - Requires Gemini CLI installed and authenticated
-- Supports all Gemini model variants (configure via `GEMINI_MODEL` environment variable)
-- Output is streamed directly from Gemini CLI
+- Best suited for UI/UX prototyping and visual design tasks
+- Supports all Gemini model variants
