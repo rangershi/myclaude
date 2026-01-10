@@ -6,42 +6,108 @@
 
 - **Commands**: 用户触发的开发流程命令
 - **Agents**: 自动化执行的智能代理
+- **Skills**: 专业领域知识和工具集成
+- **Workflows**: BMAD、Requirements-Driven 等完整开发流程
 
-## 安装
+## 快速开始
 
-此插件作为 mydx 插件集的一部分自动加载。
+### 1. 环境检测
 
-## 使用
-
-### Commands
+首次使用前，运行环境诊断命令检测依赖是否已安装：
 
 ```bash
-/dx:<command-name>
+/dx:doctor
 ```
 
-### Agents
+该命令会检测 `codeagent-wrapper` 等必要工具是否已安装，如未安装会提示自动安装。
 
-Agent 会根据场景自动触发，或通过特定关键词激活。
+### 2. 安装插件
+
+```bash
+# 克隆仓库
+git clone https://github.com/rangershi/mydx.git
+
+# 在 Claude Code 中加载插件
+claude --plugin-dir /path/to/mydx
+```
+
+## 执行模式
+
+默认情况下，所有命令使用 **Claude 当前模型** 进行分析和执行。
+
+对于支持后端委托的命令（如 `/dx:dev`），可以通过参数选择不同的执行后端：
+
+| 参数 | 说明 |
+|------|------|
+| (默认) | 使用 Claude 当前模型直接执行 |
+| `--codex` | 委托给 OpenAI Codex CLI 执行 |
+| `--gemini` | 委托给 Google Gemini CLI 执行 |
+
+**示例**：
+
+```bash
+# 使用 Claude 执行（默认）
+/dx:dev 实现用户登录功能
+
+# 委托给 Codex 执行
+/dx:dev --codex 实现用户登录功能
+
+# 委托给 Gemini 执行
+/dx:dev --gemini 实现用户登录功能
+```
+
+## 主要命令
+
+| 命令 | 说明 |
+|------|------|
+| `/dx:doctor` | 环境诊断，检测并安装依赖 |
+| `/dx:dev` | 轻量级开发流程 |
+| `/dx:code` | 代码生成 |
+| `/dx:bugfix` | Bug 修复 |
+| `/dx:code-entropy-scan` | 代码熵扫描分析 |
+| `/dx:git-commit-and-pr` | 提交代码并创建 PR |
+| `/dx:pr-review-loop` | PR 评审循环 |
+| `/bmad:bmad-pilot` | BMAD 敏捷流程 |
+| `/feature-dev:feature-dev` | 功能开发流程 |
+| `/requirements-driven-workflow:requirements-pilot` | 需求驱动开发流程 |
+
+## 目录结构
+
+```
+mydx/
+├── .claude-plugin/
+│   └── marketplace.json    # 插件配置
+├── dx/
+│   ├── commands/           # 命令定义
+│   ├── agents/             # Agent 定义
+│   ├── skills/             # Skills 定义
+│   ├── hook/               # Hooks 配置
+│   ├── bmad/               # BMAD 工作流
+│   ├── feature-dev/        # 功能开发工作流
+│   └── requirements-driven-workflow/  # 需求驱动工作流
+└── README.md
+```
 
 ## 添加新组件
 
 ### 添加 Command
 
-1. 在 `commands/` 目录创建 `.md` 文件
-2. 在 `marketplace.json` 的 `commands` 数组中注册
+1. 在 `dx/commands/` 目录创建 `.md` 文件
+2. 在 `.claude-plugin/marketplace.json` 的对应插件 `commands` 数组中注册
 
 ### 添加 Agent
 
-1. 在 `agents/` 目录创建 `.md` 文件
-2. 在 `marketplace.json` 的 `agents` 数组中注册
+1. 在 `dx/agents/` 目录创建 `.md` 文件
+2. 在 `.claude-plugin/marketplace.json` 的对应插件 `agents` 数组中注册
 
-## 目录结构
+## 致谢
 
-```
-dx/
-├── .claude-plugin/
-│   └── marketplace.json    # 插件配置
-├── commands/               # 命令定义
-├── agents/                 # Agent 定义
-└── README.md
-```
+本项目大量代码来源于以下项目，在此表示感谢：
+
+- [cexll/myclaude](https://github.com/cexll/myclaude) - 本项目的主要代码基础，包括 codeagent-wrapper、命令、Agent 等核心组件
+- [Anthropic Claude Code](https://claude.ai/claude-code) - Claude Code 官方插件系统和最佳实践
+
+## License
+
+- **本项目新增/修改的代码**：采用 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) 协议，放弃所有版权，可自由使用
+- **继承的代码**：按照原项目的协议授权
