@@ -58,9 +58,11 @@ claude --plugin-dir /path/to/mydx
 /dx:dev --gemini 实现用户登录功能
 ```
 
-### PR 评审循环 (`/dx:pr-review-loop`)
+### PR 评审循环 (`/dx:pr-review-loop`) - 特殊说明
 
-**注意**：此命令**默认使用 Codex (codeagent-wrapper)** 进行代码修复。
+> **注意**：此命令与其他命令不同，**默认使用 Codex (codeagent-wrapper)** 进行代码修复，而非 Claude。
+>
+> 这是因为 PR 评审循环涉及多轮复杂修复，使用 Codex 可以更好地处理 Context Isolation。
 
 | 参数 | 说明 |
 |------|------|
@@ -73,7 +75,8 @@ claude --plugin-dir /path/to/mydx
 # 默认模式：使用 Codex 修复（推荐，适合复杂问题）
 /dx:pr-review-loop
 
-# nocodex 模式：使用 Claude 直接修复（适合简单问题，减少 token 消耗）
+# nocodex 模式：使用 Claude 直接修复
+# 适合简单问题，可减少 token 消耗约 15 倍
 /dx:pr-review-loop --nocodex
 
 # 指定 PR 编号
