@@ -11,6 +11,10 @@ description: '多轮 PR 评审与自动修复编排流程'
 
 # 显式指定 PR 编号
 /pr-review-loop --pr <PR_NUMBER>
+
+# 使用 nocodex 模式（pr-fix 直接执行修复，不委托 codeagent-wrapper）
+/pr-review-loop --nocodex
+/pr-review-loop --pr <PR_NUMBER> --nocodex
 ```
 
 ## Multi-Agent 架构设计
@@ -412,7 +416,11 @@ def calculate_risk_level(findings: List[Finding]) -> str:
 1. 接受 `--pr <PR_NUMBER>` 或 `<PR_URL>`
    - 若提供：解析出 `pr_number`，直接使用
 
-2. 若未提供 `--pr`，自动识别当前分支对应的 PR：
+2. 检查是否指定 `--nocodex` 标志
+   - 若提供：设置 `USE_NOCODEX = true`，pr-fix 将直接执行修复
+   - 若未提供：设置 `USE_NOCODEX = false`，pr-fix 将委托 codeagent-wrapper
+
+3. 若未提供 `--pr`，自动识别当前分支对应的 PR：
    ```bash
    # 获取当前分支名
    git branch --show-current
@@ -434,6 +442,7 @@ def calculate_risk_level(findings: List[Finding]) -> str:
 
 - 设置 `ROUND = 1`
 - 设置 `MAX_ROUNDS = 3`
+- 设置 `USE_NOCODEX`（来自参数解析）
 - 初始化 `REVIEW_HISTORY = []`
 
 ---
@@ -818,6 +827,8 @@ Task 调用:
 - prompt: |
     请修复 PR #${PR_NUMBER} 中的评审问题。
 
+    ${USE_NOCODEX ? "nocodex" : ""}
+
     ## 问题列表（Structured Handoff）
 
     以下问题需要修复：
@@ -843,6 +854,18 @@ Task 调用:
     2. 对于无法修复的问题，记录拒绝理由
     3. 每个修复对应 fixPayload.issuesToFix[].id
 ```
+
+**执行模式说明**：
+
+| 模式 | 条件 | pr-fix 行为 |
+|------|------|-------------|
+| **默认模式** | `USE_NOCODEX = false` | pr-fix 委托 codeagent-wrapper 执行修复 |
+| **nocodex 模式** | `USE_NOCODEX = true` | pr-fix 直接执行修复，减少代理层开销 |
+
+**nocodex 模式适用场景**：
+- 问题简单明确、修复建议具体
+- 需要减少 token 消耗和执行时间
+- 不需要复杂推理的修复任务
 
 **⛔ 禁止行为**：
 - ⛔ Orchestrator 直接使用 Edit/Write 修改代码
@@ -1184,6 +1207,8 @@ flowchart TD
 ```
 请修复 PR #${PR_NUMBER} 中的评审问题。
 
+${USE_NOCODEX ? "nocodex" : ""}
+
 ## 问题列表（Structured Handoff）
 
 ${JSON.stringify(fixPayload, null, 2)}
@@ -1233,6 +1258,10 @@ ${JSON.stringify(fixPayload, null, 2)}
 - 仅修复 issuesToFix 中的问题，不引入无关变更
 - 对无法修复的问题，记录 rejectedIssues 并说明理由
 - 每个 fixedIssue 必须关联 findingId
+
+## 执行模式
+- **默认模式**：pr-fix 委托 codeagent-wrapper 执行修复（适合复杂问题）
+- **nocodex 模式**：当 prompt 中包含 "nocodex" 时，pr-fix 直接执行修复（适合简单明确的修复）
 ```
 
 ---
@@ -1267,6 +1296,14 @@ ${JSON.stringify(fixPayload, null, 2)}
 - Phase D 的 pr-fix Agent **必须通过 Task 工具调用**，禁止绕过
 - 每个 Agent 的结果需等待完成后再进行聚合
 - **Agent 调用是强制性的**，不是可选的
+
+### nocodex 模式
+
+- 通过 `--nocodex` 参数启用
+- 启用后，pr-fix Agent 将直接执行修复，而非委托 codeagent-wrapper
+- **适用场景**：问题简单明确、修复建议具体、不需要复杂推理
+- **优势**：减少 Context Isolation 开销、避免 Telephone Game、降低 token 消耗（约 15×）
+- **参数传递**：Orchestrator 在调用 pr-fix 时需在 prompt 中包含 "nocodex" 关键字
 
 ### 人工评论处理
 
