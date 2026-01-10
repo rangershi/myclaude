@@ -122,11 +122,47 @@ git clone https://github.com/rangershi/mydx.git .claude-plugin/mydx
 /dx:pr-review-loop --pr 123 --nocodex
 ```
 
+### 技术咨询 (`/dx:ask`) - 多后端并行分析
+
+> **特色功能**：支持多个 AI 后端并行分析同一问题，综合多视角得出更可靠的建议。
+
+**架构模式**: Supervisor/Orchestrator (Multi-Agent Patterns)
+
+```
+User Query -> Orchestrator -> [Parallel Analysers] -> Aggregation -> Final Output
+```
+
+| 参数 | 分析方式 | 说明 |
+|------|----------|------|
+| (默认) | 单一分析 | 使用 Claude 分析 |
+| `--codex` | 双路并行 | Claude + Codex 并行分析 |
+| `--gemini` | 双路并行 | Claude + Gemini 并行分析 |
+| `--codex --gemini` | 三路并行 | Claude + Codex + Gemini 三方对比 |
+
+**示例**：
+
+```bash
+# 默认模式：使用 Claude 分析
+/dx:ask 如何设计一个高可用的消息队列系统
+
+# 双路并行：Claude + Codex 分析（适合需要深度代码分析的问题）
+/dx:ask --codex 这个微服务架构有什么潜在问题
+
+# 三路并行：获取最全面的分析（适合重要架构决策）
+/dx:ask --codex --gemini 我们应该选择 Kafka 还是 RabbitMQ
+```
+
+**输出特点**：
+- **共识建议** - 多个后端一致认同的建议（高可信度）
+- **独特见解** - 各后端独特的分析视角
+- **差异权衡** - 矛盾建议的权衡说明
+
 ## 主要命令
 
 | 命令 | 说明 |
 |------|------|
 | `/dx:doctor` | 环境诊断，检测并安装依赖 |
+| `/dx:ask` | 技术问题咨询（支持多后端并行分析） |
 | `/dx:dev` | 轻量级开发流程 |
 | `/dx:code` | 代码生成 |
 | `/dx:bugfix` | Bug 修复 |
