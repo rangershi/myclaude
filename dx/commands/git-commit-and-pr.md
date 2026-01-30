@@ -1,7 +1,7 @@
 ---
-allowed-tools: [Bash, Read, Glob, TodoWrite, Edit, Grep, Task]
-description: '统一 Git 工作流：Issue/Commit/PR 自动化'
-model: haiku
+allowed-tools: [Bash, Read, Glob, TodoWrite, Edit, Grep]
+description: 'Git 工作流：Issue/Commit/PR 自动化'
+agent: quick
 ---
 
 ## 用法
@@ -20,6 +20,7 @@ model: haiku
 ### Step 1: 状态检测
 
 并行执行：
+
 ```bash
 git status --short
 git branch --show-current
@@ -27,6 +28,7 @@ git log -1 --format='%H %s' 2>/dev/null || echo "no-commits"
 ```
 
 根据状态决定执行阶段：
+
 - 无 Issue 或 `--issue-only` → 执行 Issue 创建
 - 有未提交修改 → 执行 Commit 流程
 - 工作树干净且在功能分支 → 执行 PR 创建
@@ -37,19 +39,134 @@ git log -1 --format='%H %s' 2>/dev/null || echo "no-commits"
 
 ### Step 2: Issue 创建（可选）
 
-**使用 Task 调用 `dx:issue-creator` agent：**
-```
-prompt: |
-  分析当前对话历史和代码变更，创建 GitHub Issue。
+#### 2.1 信息收集与分析
 
-  用户参数：
-  - title: <用户提供的标题，如有>
-  - labels: <用户提供的标签，如有>
+**代码变更分析（并行执行）：**
 
-  执行 git diff --stat 获取变更范围。
-  使用 gh issue create 创建 Issue。
-  输出 Issue 编号和链接。
+```bash
+git status --short
+git diff --stat
 ```
+
+**重复检查（可选）：**
+
+```bash
+gh issue list --search "<关键词>" --limit 5
+```
+
+**上下文提炼：**
+
+- 从对话历史中提取问题描述和需求背景
+- 识别受影响的模块（backend/front/admin/shared）
+- 确认是否涉及数据库、API 或基础设施变更
+
+#### 2.2 Issue 内容生成
+
+**标题生成策略：**
+
+- 格式：`[模块] 简洁描述` 或 `[类型] 功能/问题描述`
+- 示例：
+  - `[Backend] 优化用户认证流程性能`
+  - `[Bug] 修复聊天消息丢失问题`
+  - `[规范] 统一错误码命名规范`
+- 优先使用用户提供的 `--title` 参数
+
+**标签选择（基于内容自动添加）：**
+
+- `bug` - Bug 修复
+- `enhancement` - 功能增强
+- `documentation` - 文档相关
+- `performance` - 性能优化
+- `refactor` - 代码重构
+- `backend` / `frontend` - 模块标签
+- `infrastructure` - 基础设施
+
+**正文结构模板：**
+
+```markdown
+## 背景
+
+[当前场景、讨论来源、为什么需要这个改动]
+
+## 现状/问题
+
+[观察到的问题、现有实现的不足、需要改进的地方]
+
+## 期望行为
+
+[目标状态、期望结果、验收标准]
+
+## 执行计划
+
+- [ ] 步骤 1
+- [ ] 步骤 2
+- [ ] 步骤 3
+
+## 影响范围
+
+[受影响的模块、可能的风险、需要通知的团队]
+
+## 相关资源
+
+[相关 Issue、PR、文档链接]
+```
+
+#### 2.3 执行 Issue 创建
+
+使用 heredoc 格式执行 gh CLI：
+
+```bash
+gh issue create \
+  --title "[模块] 问题摘要" \
+  --label label1 --label label2 \
+  --body-file - <<'MSG'
+## 背景
+
+[从对话历史提炼的背景信息]
+
+## 现状/问题
+
+[代码变更分析结果和问题描述]
+
+## 期望行为
+
+[目标状态和验收标准]
+
+## 执行计划
+
+- [ ] 步骤 1
+- [ ] 步骤 2
+
+## 影响范围
+
+[受影响模块列表]
+MSG
+```
+
+**质量检查清单：**
+
+- [ ] 标题简洁明确（≤ 80 字符）
+- [ ] 背景信息完整
+- [ ] 问题/需求描述清晰
+- [ ] 执行步骤可操作
+- [ ] 影响范围已标注
+- [ ] 标签选择准确
+- [ ] 无敏感信息（.env、密钥等）
+
+#### 2.4 输出 Issue 信息
+
+成功创建后，解析 gh 输出获取 Issue 编号：
+
+```
+✅ Issue 创建成功
+
+Issue: #<编号>
+标题: <标题>
+链接: <GitHub URL>
+标签: <标签列表>
+```
+
+存储 Issue ID 供后续 commit 和 PR 使用。
 
 `--issue-only` 时在此终止。
 
@@ -125,6 +242,7 @@ EOF
 #### 4.4 提示评审
 
 创建 PR 成功后，提醒用户运行自动评审流程：
+
 ```
 💡 提示：运行以下命令启动自动评审
 /dx:pr-review-loop --pr <PR_NUMBER>
@@ -135,6 +253,7 @@ EOF
 ## 输出格式
 
 **成功：**
+
 ```
 ✅ 完成
 
@@ -147,6 +266,7 @@ PR: #<编号> → <URL>
 ```
 
 **部分完成：**
+
 ```
 ⚠️ 停止于 [阶段]
 

@@ -6,14 +6,14 @@
     "url": "https://github.com/rangershi/mydx"
   },
   "metadata": {
-    "description": "Developer Experience toolkit with development workflows, code review, PR automation, and AI-assisted agents",
-    "version": "1.0.15"
+    "description": "Developer Experience toolkit focusing on Git workflows and multi-agent PR review automation",
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "dx",
       "source": "./dx/",
-      "description": "Developer Experience toolkit - complete development workflows including BMAD agile, feature development, requirements-driven workflow, code review, and PR automation",
+      "description": "Developer Experience toolkit - Git workflows (commit, PR, release) and multi-agent PR review automation",
       "author": {
         "name": "DX Team",
         "url": "https://github.com/rangershi/mydx"
@@ -24,64 +24,32 @@
       "keywords": [
         "dx",
         "developer-experience",
+        "git",
         "workflow",
         "automation",
         "code-review",
         "pr-automation",
-        "bmad",
-        "agile",
-        "requirements",
-        "feature-development"
+        "multi-agent",
+        "release-management"
       ],
       "category": "workflows",
       "strict": false,
       "commands": [
-        "./commands/ask.md",
-        "./commands/bugfix.md",
-        "./commands/code.md",
-        "./commands/code-entropy-scan.md",
-        "./commands/dev.md",
         "./commands/doctor.md",
         "./commands/git-commit-and-pr.md",
-        "./commands/omo.md",
-        "./commands/pr-review-loop.md",
-        "./commands/bmad-pilot.md",
-        "./commands/feature-dev.md",
-        "./commands/requirements-pilot.md"
+        "./commands/git-release.md",
+        "./commands/pr-review-loop.md"
       ],
       "agents": [
-        "./agents/analyser.md",
-        "./agents/bugfix.md",
-        "./agents/bugfix-verify.md",
-        "./agents/codex-review.md",
-        "./agents/dev-plan-generator.md",
-        "./agents/issue-creator.md",
-        "./agents/pr-comments-analyzer.md",
+        "./agents/claude-reviewer.md",
+        "./agents/codex-reviewer.md",
+        "./agents/gemini-reviewer.md",
+        "./agents/pr-context.md",
         "./agents/pr-fix.md",
-        "./agents/review.md",
-        "./bmad/agents/bmad-po.md",
-        "./bmad/agents/bmad-architect.md",
-        "./bmad/agents/bmad-sm.md",
-        "./bmad/agents/bmad-dev.md",
-        "./bmad/agents/bmad-qa.md",
-        "./bmad/agents/bmad-orchestrator.md",
-        "./bmad/agents/bmad-review.md",
-        "./feature-dev/agents/code-architect.md",
-        "./feature-dev/agents/code-explorer.md",
-        "./feature-dev/agents/code-reviewer.md",
-        "./requirements-driven-workflow/agents/requirements-generate.md",
-        "./requirements-driven-workflow/agents/requirements-code.md",
-        "./requirements-driven-workflow/agents/requirements-testing.md",
-        "./requirements-driven-workflow/agents/requirements-review.md"
+        "./agents/pr-precheck.md",
+        "./agents/pr-review-aggregate.md"
       ],
-      "skills": [
-        "./skills/codex-cli/SKILL.md",
-        "./skills/gemini-cli/SKILL.md",
-        "./skills/product-requirements/SKILL.md",
-        "./skills/omo/SKILL.md",
-        "./skills/agent-browser/SKILL.md"
-      ],
-      "hooks": "./hooks/hooks.json"
+      "skills": []
     }
   ]
 }

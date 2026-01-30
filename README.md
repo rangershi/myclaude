@@ -1,13 +1,13 @@
 # DX - Developer Experience Toolkit
 
-团队内部使用的开发者体验工具集，提供符合团队流程的命令和自动化 Agent。
+团队内部使用的开发者体验工具集，专注于 Git 工作流自动化和多智能体 PR 评审。
 
-## 功能
+## 功能特性
 
-- **Commands**: 用户触发的开发流程命令
-- **Agents**: 自动化执行的智能代理
-- **Skills**: 专业领域知识和工具集成
-- **Workflows**: BMAD、Requirements-Driven 等完整开发流程
+- **Git 工作流自动化**: Issue 创建、代码提交、PR 创建一站式流程
+- **智能版本发布**: 从 release 分支自动生成 changelog 并发布版本
+- **多智能体 PR 评审**: 并行使用 Claude、Codex、Gemini 进行代码评审
+- **自动修复循环**: PR 评审问题自动修复并推送
 
 ## 快速开始
 
@@ -19,7 +19,7 @@
 /dx:doctor
 ```
 
-该命令会检测 `codex`、`gemini` 等 CLI 工具是否已安装，如未安装会提示安装方法。
+该命令会检测必要的工具是否已安装，如未安装会提示安装方法。
 
 ### 2. 安装插件
 
@@ -56,376 +56,292 @@ cd your-project
 git clone https://github.com/rangershi/mydx.git .claude-plugin/mydx
 ```
 
-## 推荐开发流程
+## 命令详解
 
-### 第一步：方案讨论
+### `/dx:doctor` - 环境诊断
 
-开始任何开发任务前，建议先使用 `/dx:ask` 进行技术方案讨论：
+检测并安装所需的依赖工具。
 
 ```bash
-# 单独使用 Claude 分析
-/dx:ask 如何实现用户认证模块
-
-# 重要决策时使用多后端并行分析
-/dx:ask --codex --gemini 微服务拆分方案设计
+/dx:doctor
 ```
 
-### 第二步：选择开发流程
+**检测内容**:
+- `opencode` CLI 工具
+- `dx` CLI 工具
+- `agent-browser` 工具
+- `AGENTS.md` 配置文件
+- `opencode.json` 配置文件
+- OpenCode 插件安装状态
 
-根据功能复杂度（主要考虑上下文长度需求）从高到低选择合适的开发流程：
+### `/dx:git-commit-and-pr` - Git 工作流自动化
 
-| 复杂度 | 命令 | 适用场景 | 上下文需求 |
-|--------|------|----------|------------|
-| **高** | `/dx:bmad-pilot` | 大型功能、需要完整敏捷流程（PO→架构→SM→开发→QA→Review） | 最长 |
-| **中高** | `/dx:requirements-pilot` | 中大型功能、需要严格需求确认和质量门控 | 较长 |
-| **中** | `/dx:feature-dev` | 单个功能开发、需要架构设计和代码审查 | 中等 |
-| **低** | `/dx:dev` | 简单功能、快速迭代、小改动 | 最短 |
-
-
-### 示例场景
+自动化的 Issue/Commit/PR 创建流程。
 
 ```bash
-# 场景 1：大型电商系统重构
-/dx:ask --codex 电商系统微服务拆分方案
-/dx:bmad-pilot 重构订单模块为独立微服务
+# 自动检测并执行所需阶段
+/dx:git-commit-and-pr
 
-# 场景 2：新增支付功能
-/dx:ask 支付模块技术选型
-/dx:requirements-pilot 实现支付宝支付集成
+# 指定关联 Issue
+/dx:git-commit-and-pr --issue <ID>
 
-# 场景 3：添加用户头像上传
-/dx:feature-dev 实现用户头像上传功能
+# 仅创建 Issue
+/dx:git-commit-and-pr --issue-only
 
-# 场景 4：修复登录 bug
-/dx:dev 修复登录页面验证码不显示问题
+# 仅创建 PR
+/dx:git-commit-and-pr --pr --base <BRANCH>
 ```
 
-## 执行模式
+**执行流程**:
 
-默认情况下，大多数命令使用 **Claude 当前模型** 进行分析和执行。
+1. **Issue 创建**（可选）
+   - 从对话历史提取问题描述
+   - 分析代码变更
+   - 生成结构化 Issue 内容（背景、问题、期望、计划、影响范围）
+   - 自动添加合适的标签
 
-### 后端选择
+2. **Commit 流程**
+   - 暂存所有变更
+   - 分析变更内容
+   - 生成符合规范的 commit message
+   - 自动关联 Issue
 
-可以通过参数选择不同的执行后端：
+3. **PR 创建**
+   - 推送分支到远程
+   - 分析与主分支的差异
+   - 生成 PR 描述
+   - 自动关联 Issue
 
-| 参数 | 后端 | 说明 |
-|------|------|------|
-| (默认) | Claude | 使用 Claude 当前模型直接执行 |
-| `--codex` | OpenAI Codex | 委托给 Codex CLI 执行 |
-| `--gemini` | Google Gemini | 委托给 Gemini CLI 执行 |
+**输出示例**:
+```
+✅ 完成
 
-### 各后端能力特点
+Issue: #123 [Backend] 优化用户认证流程
+Commit: a1b2c3d feat: add JWT authentication
+PR: #45 → https://github.com/owner/repo/pull/45
 
-| 后端 | 擅长领域 | 推荐场景 |
-|------|----------|----------|
-| **Claude** | 通用任务、文档生成、提示词工程、快速迭代 | 简单任务、需要快速响应、Token 敏感场景 |
-| **Codex** | 深度代码理解、复杂算法、大规模重构、精确依赖追踪 | 复杂调试、性能优化、架构重构、需要强推理的任务 |
-| **Gemini** | 多模态理解、长上下文处理、创意生成 | 需要处理图片/文档、超长代码分析、创意性任务 |
-
-**选择建议**：
-- **默认使用 Claude**：大多数日常开发任务
-- **使用 Codex**：遇到复杂问题、需要深度分析、或任务超出当前上下文承载能力时
-- **使用 Gemini**：需要多模态能力或处理超长上下文时
-
-### 示例
-
-```bash
-# 使用 Claude 执行（默认）
-/dx:dev 实现用户登录功能
-
-# 委托给 Codex 执行（复杂任务）
-/dx:dev --codex 重构认证模块并优化性能
-
-# 委托给 Gemini 执行
-/dx:dev --gemini 分析这个截图中的 UI 并实现
+💡 下一步：运行以下命令启动自动评审
+/dx:pr-review-loop --pr 45
 ```
 
-### PR 评审循环 (`/dx:pr-review-loop`) - 特殊说明
+### `/dx:git-release` - 智能版本发布
 
-> **注意**：此命令与其他命令不同，**默认使用 Codex CLI** 进行代码修复，而非 Claude。
->
-> 这是因为 PR 评审循环涉及多轮复杂修复，使用 Codex 可以更好地处理 Context Isolation。
-
-| 参数 | 说明 |
-|------|------|
-| (默认) | 使用 Codex CLI 执行代码修复 |
-
-**示例**：
+从 release 分支自动生成 changelog 并创建 GitHub Release。
 
 ```bash
-# 默认模式：使用 Codex 修复（推荐，适合复杂问题）
+# 必须在 release/vX.Y.Z 或 release/vX.Y.Z-<prerelease>.N 分支上执行
+/dx:git-release
+```
+
+**前置条件**:
+- 必须在 `release/vX.Y.Z` 或 `release/vX.Y.Z-<prerelease>.N` 格式的分支上
+- 工作目录必须干净（无未提交的修改）
+- 版本号从分支名自动提取
+
+**支持的版本格式**:
+- 正式版本: `release/v0.1.10`、`release/v1.0.0`
+- Beta 版本: `release/v0.2.6-beta.5`
+- Alpha 版本: `release/v1.0.0-alpha.3`
+- RC 版本: `release/v1.0.0-rc.2`
+
+**执行流程**:
+
+1. **状态检查**
+   - 验证分支名格式
+   - 检查工作目录状态
+   - 提取并确认版本号
+   - 检查版本号冲突
+
+2. **更新版本号**
+   - 更新所有 `package.json` 文件的 version 字段
+   - 提交版本号变更
+
+3. **收集变更信息**
+   - 从 GitHub Releases 获取上一个发布版本
+   - 提取 PR 信息（标题、标签、描述）
+   - 分析提交记录
+   - 识别运维提醒事项
+
+4. **生成发行说明**
+   - 发布摘要（3-5 条核心变更）
+   - 分类变更（新增、优化、修复、技术改进）
+   - 运维提醒（环境变量、部署步骤、依赖更新）
+   - 引用（PRs、Issues、提交数）
+   - 升级指南
+
+5. **创建 Release**
+   - 创建 Git annotated tag
+   - 推送 tag 到远程
+   - 创建 GitHub Release
+
+**示例**:
+
+```bash
+# 1. 创建 release 分支
+git checkout -b release/v0.1.10
+
+# 2. 执行发布
+/dx:git-release
+
+# 输出:
+📊 发布前状态检查...
+✅ 工作目录干净
+✅ 当前分支: release/v0.1.10
+✅ 版本号: v0.1.10
+
+🔄 更新版本号...
+✅ 已更新 4 个 package.json 文件
+
+📝 变更分析...
+发现 15 commits, 8 PRs
+
+📄 生成发行说明...
+[预览发行说明]
+
+🎉 v0.1.10 发布成功!
+URL: https://github.com/owner/repo/releases/tag/v0.1.10
+```
+
+### `/dx:pr-review-loop` - 多智能体 PR 评审循环
+
+使用多个 AI 模型（Claude、Codex、Gemini）并行评审 PR，自动修复问题并推送。
+
+```bash
+# 默认评审最近的 PR
 /dx:pr-review-loop
 
 # 指定 PR 编号
 /dx:pr-review-loop --pr 123
 ```
 
-### 技术咨询 (`/dx:ask`) - 多后端并行分析
+**架构设计**:
 
-> **特色功能**：支持多个 AI 后端并行分析同一问题，综合多视角得出更可靠的建议。
-
-**架构模式**: Supervisor/Orchestrator (Multi-Agent Patterns)
-
-```
-User Query -> Orchestrator -> [Parallel Analysers] -> Aggregation -> Final Output
-```
-
-| 参数 | 分析方式 | 说明 |
-|------|----------|------|
-| (默认) | 单一分析 | 使用 Claude 分析 |
-| `--codex` | 双路并行 | Claude + Codex 并行分析 |
-| `--gemini` | 双路并行 | Claude + Gemini 并行分析 |
-| `--codex --gemini` | 三路并行 | Claude + Codex + Gemini 三方对比 |
-
-**示例**：
-
-```bash
-# 默认模式：使用 Claude 分析
-/dx:ask 如何设计一个高可用的消息队列系统
-
-# 双路并行：Claude + Codex 分析（适合需要深度代码分析的问题）
-/dx:ask --codex 这个微服务架构有什么潜在问题
-
-# 三路并行：获取最全面的分析（适合重要架构决策）
-/dx:ask --codex --gemini 我们应该选择 Kafka 还是 RabbitMQ
-```
-
-**输出特点**：
-- **共识建议** - 多个后端一致认同的建议（高可信度）
-- **独特见解** - 各后端独特的分析视角
-- **差异权衡** - 矛盾建议的权衡说明
-
-## 主要命令
-
-| 命令 | 说明 |
-|------|------|
-| `/dx:doctor` | 环境诊断，检测并安装依赖 |
-| `/dx:ask` | 技术问题咨询（支持多后端并行分析） |
-| `/dx:dev` | 轻量级开发流程 |
-| `/dx:code` | 代码生成 |
-| `/dx:bugfix` | Bug 修复 |
-| `/dx:code-entropy-scan` | 代码熵扫描分析 |
-| `/dx:git-commit-and-pr` | 提交代码并创建 PR |
-| `/dx:pr-review-loop` | PR 评审循环 |
-| `/dx:bmad-pilot` | BMAD 敏捷流程 |
-| `/dx:feature-dev` | 功能开发流程 |
-| `/dx:requirements-pilot` | 需求驱动开发流程 |
-
-## 工作流详解
-
-### BMAD 工作流 (`bmad/`)
-
-**BMAD (Business Model Agile Development)** 是一套完整的敏捷开发流程，模拟真实团队协作。
-
-| Agent | 角色 | 职责 |
-|-------|------|------|
-| `bmad-po` | Product Owner | 需求分析、用户故事编写 |
-| `bmad-architect` | 架构师 | 技术方案设计、架构决策 |
-| `bmad-sm` | Scrum Master | 流程协调、任务分配 |
-| `bmad-dev` | 开发者 | 代码实现 |
-| `bmad-qa` | QA 工程师 | 测试用例设计、质量保证 |
-| `bmad-review` | 代码审查 | Code Review |
-| `bmad-orchestrator` | 编排器 | 协调各角色工作流 |
-
-**入口命令**: `/dx:bmad-pilot`
-
-**命令参数**:
-
-| 参数 | 说明 |
-|------|------|
-| `--skip-scan` | 跳过仓库扫描阶段（不推荐，会失去代码库上下文） |
-| `--skip-tests` | 跳过 QA 测试阶段 |
-| `--direct-dev` | 跳过 SM 计划阶段，架构完成后直接进入开发 |
-| `--codex` | Agent 使用 Codex 后端执行（适合复杂任务） |
-| `--gemini` | Agent 使用 Gemini 后端执行 |
-
-**示例**:
-
-```bash
-# 完整流程（推荐）
-/dx:bmad-pilot 开发电商订单系统
-
-# 快速开发模式（跳过 SM 规划）
-/dx:bmad-pilot --direct-dev 实现商品搜索功能
-
-# 跳过测试
-/dx:bmad-pilot --skip-tests 添加数据导出功能
-
-# 使用 Codex 处理复杂任务
-/dx:bmad-pilot --codex 重构整体架构
-
-# 组合参数（快速原型）
-/dx:bmad-pilot --direct-dev --skip-tests 快速验证 POC
-```
-
-### Requirements-Driven 工作流 (`requirements-driven-workflow/`)
-
-**需求驱动开发流程**，强调从需求确认到代码实现的完整链路。
+采用 **Multi-Agent Orchestration** 模式，包含以下 Agent：
 
 | Agent | 职责 |
 |-------|------|
-| `requirements-generate` | 生成技术规格文档 |
-| `requirements-code` | 基于规格实现代码 |
-| `requirements-review` | 代码质量评审 |
-| `requirements-testing` | 测试用例生成与执行 |
+| `pr-precheck` | PR 前置检查（CI 状态、分支验证） |
+| `pr-context` | 提取 PR 上下文信息 |
+| `codex-reviewer` | 使用 Codex 进行代码评审 |
+| `claude-reviewer` | 使用 Claude 进行代码评审 |
+| `gemini-reviewer` | 使用 Gemini 进行代码评审 |
+| `pr-review-aggregate` | 聚合评审结果并决策 |
+| `pr-fix` | 自动修复评审发现的问题 |
 
-**流程**:
-1. **Phase 0**: 仓库扫描（了解现有代码库）
-2. **Phase 1**: 需求确认（交互式澄清，90+ 质量分）
-3. **用户审批门控**（必须获得用户确认才进入实现）
-4. **Phase 2**: 实现（规格生成 → 代码实现 → 评审 → 测试）
+**执行流程**:
 
-**入口命令**: `/dx:requirements-pilot`
-
-**命令参数**:
-
-| 参数 | 说明 |
-|------|------|
-| `--skip-scan` | 跳过仓库扫描阶段（不推荐，会失去代码库上下文） |
-| `--skip-tests` | 跳过测试阶段（适合简单改动或文档更新） |
-| `--codex` | Agent 使用 Codex 后端执行（适合复杂任务） |
-| `--gemini` | Agent 使用 Gemini 后端执行 |
-
-**示例**:
-
-```bash
-# 完整流程（推荐）
-/dx:requirements-pilot 实现用户积分系统
-
-# 跳过测试（简单任务）
-/dx:requirements-pilot --skip-tests 添加配置项
-
-# 使用 Codex 处理复杂任务
-/dx:requirements-pilot --codex 重构支付模块
-
-# 组合参数
-/dx:requirements-pilot --skip-scan --skip-tests 更新错误提示文案
+```
+┌─────────────────┐
+│  pr-precheck    │  检查 CI、分支状态
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   循环 (最多3轮) │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  pr-context     │  提取 PR 上下文
+└────────┬────────┘
+         │
+         ▼
+┌──────────────────────────────────┐
+│  并行评审                         │
+│  ┌────────────┐                  │
+│  │ codex      │                  │
+│  └────────────┘                  │
+│  ┌────────────┐                  │
+│  │ claude     │                  │
+│  └────────────┘                  │
+│  ┌────────────┐                  │
+│  │ gemini     │                  │
+│  └────────────┘                  │
+└────────┬─────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│ pr-review-      │  决策：通过 or 需修复
+│ aggregate       │
+└────────┬────────┘
+         │
+         ├─── 通过 ──→ 结束
+         │
+         └─── 需修复 ──→ pr-fix ──→ 下一轮
 ```
 
-### Feature-Dev 工作流 (`feature-dev/`)
+**特性**:
 
-**功能开发工作流**，专注于单个功能的完整开发周期。
+1. **并行评审**: 三个 AI 模型同时评审，获取多视角反馈
+2. **智能聚合**: 自动去重、分类、优先级排序评审意见
+3. **自动修复**: 每个问题单独 commit 并推送
+4. **循环迭代**: 最多 3 轮评审-修复循环
+5. **质量门控**: 所有 reviewer 都通过才结束
 
-| Agent | 职责 |
-|-------|------|
-| `code-explorer` | 代码库探索、模式识别 |
-| `code-architect` | 功能架构设计 |
-| `code-reviewer` | 代码审查与质量评估 |
+**输出示例**:
 
-**入口命令**: `/dx:feature-dev`
+```
+🔍 PR #123 评审开始
 
-**命令参数**:
+Round 1:
+  ✅ 前置检查通过
+  📝 提取上下文完成
+  🤖 Codex: 发现 3 个问题
+  🤖 Claude: 发现 2 个问题
+  🤖 Gemini: 发现 1 个问题
+  📊 聚合评审: 需修复 4 个问题
+  🔧 自动修复完成 (4 commits pushed)
 
-| 参数 | 说明 |
-|------|------|
-| `--codex` | 使用 Codex 后端执行探索、架构和实现（适合复杂功能） |
-| `--gemini` | 使用 Gemini 后端执行 |
+Round 2:
+  📝 提取上下文完成
+  🤖 Codex: ✅ 通过
+  🤖 Claude: 发现 1 个问题
+  🤖 Gemini: ✅ 通过
+  📊 聚合评审: 需修复 1 个问题
+  🔧 自动修复完成 (1 commit pushed)
 
-**示例**:
+Round 3:
+  📝 提取上下文完成
+  🤖 Codex: ✅ 通过
+  🤖 Claude: ✅ 通过
+  🤖 Gemini: ✅ 通过
+  📊 聚合评审: ✅ 全部通过
 
-```bash
-# 默认模式（Claude 直接执行）
-/dx:feature-dev 实现用户头像上传功能
-
-# 使用 Codex 处理复杂功能
-/dx:feature-dev --codex 实现实时消息推送系统
-
-# 使用 Gemini
-/dx:feature-dev --gemini 实现图片处理功能
+✅ PR #123 评审完成
 ```
 
-### Dev 轻量开发流程
+## 工作流推荐
 
-**轻量级端到端开发流程**，适合简单功能和快速迭代。
-
-**流程**:
-1. **需求澄清**（交互式问答）
-2. **技术分析**（代码库探索）
-3. **开发文档**（生成 dev-plan.md）
-4. **开发执行**（实现代码）
-5. **覆盖验证**（测试验证）
-
-**入口命令**: `/dx:dev`
-
-**命令参数**:
-
-| 参数 | 说明 |
-|------|------|
-| `--codex` | 委托 Codex 后端执行分析和开发（适合复杂度超预期的任务） |
-| `--gemini` | 委托 Gemini 后端执行 |
-
-**示例**:
+### 日常开发流程
 
 ```bash
-# 默认模式（Claude 直接执行，推荐）
-/dx:dev 添加用户登录功能
+# 1. 创建 Issue 并提交代码
+/dx:git-commit-and-pr
 
-# 使用 Codex（任务复杂度超预期时）
-/dx:dev --codex 实现复杂的权限校验逻辑
+# 2. 启动 PR 评审
+/dx:pr-review-loop --pr <PR_NUMBER>
 
-# 使用 Gemini
-/dx:dev --gemini 实现图片压缩功能
+# 3. 评审通过后合并 PR
+# （手动操作或通过 CI/CD）
 ```
 
-## Skills 说明
+### 版本发布流程
 
-Skills 提供专业领域知识和外部工具集成能力。
-
-### codex-cli (`skills/codex-cli/`)
-
-通过 Codex CLI 执行复杂代码任务。
-
-**核心命令**:
 ```bash
-codex e -C . --skip-git-repo-check --json - <<'EOF'
-<task description>
-EOF
+# 1. 创建 release 分支
+git checkout -b release/v1.2.3
+
+# 2. 执行发布
+/dx:git-release
+
+# 3. 合并 release 分支到 main
+git checkout main
+git merge release/v1.2.3
+
+# 4. 删除 release 分支
+git branch -d release/v1.2.3
+git push origin --delete release/v1.2.3
 ```
-
-**关键规则**:
-- 长时间运行是正常的（2-10 分钟）
-- **永远不要 kill codex 进程**
-- 使用 `timeout: 7200000` 配置
-
-### gemini-cli (`skills/gemini-cli/`)
-
-通过 Gemini CLI 执行多模态或长上下文任务。
-
-**核心命令**:
-```bash
-gemini -o stream-json -y -p "$(cat <<'EOF'
-<task description>
-EOF
-)"
-```
-
-**关键规则**:
-- 长时间运行是正常的（2-10 分钟）
-- **永远不要 kill gemini 进程**
-- 使用 `timeout: 7200000` 配置
-
-### product-requirements (`skills/product-requirements/`)
-
-交互式需求澄清技能，通过质量评分和迭代对话生成专业 PRD 文档。
-
-**核心能力**:
-- 100 分制需求质量评分（90+ 门控）
-- 五维度评估：业务价值、功能需求、用户体验、技术约束、范围优先级
-- 交互式澄清对话
-- 专业 PRD 文档生成（保存到 `docs/{feature-name}-prd.md`）
-
-**在 Workflow 中的集成**:
-
-| Workflow | 调用时机 | 触发条件 |
-|----------|----------|----------|
-| `/dx:bmad-pilot` | Phase 1.5（PO 分析前） | 需求描述不清晰（质量分 < 90） |
-| `/dx:requirements-pilot` | Phase 1.5（需求确认时） | 推荐始终调用以确保质量 |
-| `/dx:feature-dev` | Phase 3.1（澄清问题时） | 功能需求需要结构化文档 |
-
-**Skill 设计原则**（基于 tool-design）:
-- **What**: 交互式需求澄清，生成专业 PRD 文档
-- **When**: 需求不清晰、需要结构化文档、需要质量门控时
-- **Returns**: `docs/{feature-name}-prd.md` 文件，供后续阶段使用
 
 ## 目录结构
 
@@ -434,40 +350,75 @@ mydx/
 ├── .claude-plugin/
 │   └── marketplace.json    # 插件配置
 ├── dx/
-│   ├── commands/           # 所有命令定义（统一 /dx:* 前缀）
-│   ├── agents/             # 通用 Agent 定义
-│   ├── skills/             # Skills 定义
-│   │   ├── codex-cli/      # Codex CLI 集成
-│   │   ├── gemini-cli/     # Gemini CLI 集成
-│   │   ├── omo/            # OmO 多智能体协作
-│   │   └── product-requirements/  # 产品需求处理
-│   ├── hooks/              # Hooks 配置（标准 Claude Code 格式）
-│   ├── bmad/               # BMAD 敏捷工作流
-│   │   └── agents/         # BMAD 角色代理 (po/architect/sm/dev/qa/review)
-│   ├── feature-dev/        # 功能开发工作流
-│   │   └── agents/         # 开发代理 (explorer/architect/reviewer)
-│   └── requirements-driven-workflow/  # 需求驱动工作流
-│       └── agents/         # 需求代理 (generate/code/review/testing)
+│   ├── commands/           # 命令定义（统一 /dx:* 前缀）
+│   │   ├── doctor.md
+│   │   ├── git-commit-and-pr.md
+│   │   ├── git-release.md
+│   │   └── pr-review-loop.md
+│   └── agents/             # Agent 定义
+│       ├── claude-reviewer.md
+│       ├── codex-reviewer.md
+│       ├── gemini-reviewer.md
+│       ├── pr-context.md
+│       ├── pr-fix.md
+│       ├── pr-precheck.md
+│       └── pr-review-aggregate.md
+├── opencode.json           # OpenCode 配置
+├── AGENTS.md               # 项目指令入口
 └── README.md
 ```
 
-## 添加新组件
+## 配置文件
 
-### 添加 Command
+### opencode.json
 
-1. 在 `dx/commands/` 目录创建 `.md` 文件
-2. 在 `.claude-plugin/marketplace.json` 的对应插件 `commands` 数组中注册
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    "ruler/**/*.md"
+  ]
+}
+```
 
-### 添加 Agent
+### AGENTS.md
 
-1. 在 `dx/agents/` 目录创建 `.md` 文件
-2. 在 `.claude-plugin/marketplace.json` 的对应插件 `agents` 数组中注册
+```markdown
+# AGENTS.md
+
+OpenCode 项目指令入口文件
+```
+
+## 版本历史
+
+### v2.0.0 - 2026-01-30
+
+**重大重构**:
+- 移除复杂的 BMAD、Requirements-Driven、Feature-Dev 工作流
+- 移除所有 Skills (codex-cli, gemini-cli, omo, product-requirements, agent-browser)
+- 专注于核心功能：Git 工作流 + PR 评审
+
+**保留功能**:
+- ✅ Git 工作流自动化 (`/dx:git-commit-and-pr`)
+- ✅ 智能版本发布 (`/dx:git-release`)
+- ✅ 多智能体 PR 评审 (`/dx:pr-review-loop`)
+- ✅ 环境诊断 (`/dx:doctor`)
+
+**新增 Agents**:
+- `pr-precheck` - PR 前置检查
+- `pr-context` - PR 上下文提取
+- `claude-reviewer` - Claude 评审
+- `codex-reviewer` - Codex 评审
+- `gemini-reviewer` - Gemini 评审
+- `pr-review-aggregate` - 评审聚合
+- `pr-fix` - 自动修复
 
 ## 致谢
 
 本项目大量代码来源于以下项目，在此表示感谢：
 
-- [cexll/myclaude](https://github.com/cexll/myclaude) - 本项目的主要代码基础，包括命令、Agent 等核心组件
+- [cexll/myclaude](https://github.com/cexll/myclaude) - 本项目的主要代码基础
 - [Anthropic Claude Code](https://claude.ai/claude-code) - Claude Code 官方插件系统和最佳实践
 
 ## License
